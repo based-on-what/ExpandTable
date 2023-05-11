@@ -84,24 +84,20 @@ function createData(variable) {
             <Collapse in={open} timeout="auto" unmountOnExit>
               <Box sx={{ margin: 1 }}>
                 <Typography variant="h6" gutterBottom component="div">
-                  History
+                  Submatches
                 </Typography>
                 <Table size="small" aria-label="purchases">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Variable</TableCell>
-                      <TableCell align="center">Submatch #1</TableCell>
-                      <TableCell align="right">Submatch #2</TableCell>
+                      <TableCell >Submatch #1</TableCell>
+                      <TableCell >Submatch #2</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {row.columns[row.variable].map((columnsRow, index) => (
                         <TableRow key={columnVariable + index}>
-                            <TableCell component="th" scope="row">
-                            {columnVariable}
-                            </TableCell>
-                            <TableCell align="center">{columnsRow.firstTuple}</TableCell>
-                            <TableCell align="right">{columnsRow.secondTuple}</TableCell>
+                            <TableCell >{columnsRow.firstTuple}</TableCell>
+                            <TableCell >{columnsRow.secondTuple}</TableCell>
                         </TableRow>
                         ))
                     }
