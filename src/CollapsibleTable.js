@@ -14,126 +14,118 @@ import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
-function createData(variable) {
-    return {
-      variable,
-      columns: {
-        'X': [
-          {
-            firstTuple: ["1", ", ", "2"], // coma entre los submatches para que se visualicen de forma separada
-            secondTuple: ["3", ", ", "4"],
-          }
-        ],
-        'Y': [
-          {
-            firstTuple: ["5", ", ", "6"],
-            secondTuple: ["7", ", ", "8"],
-          }
-        ],
-        'Z': [
-            {
-                firstTuple: ["9", ", ", "10"],
-                secondTuple: ["11", ", ", "12"],      
-            }
-        ],
-        'A': [
-            {
-                firstTuple: ["13", ", ", "14"],
-                secondTuple: ["15", ", ", "16"],
-            }
-        ],
-        'B': [
-            {
-                firstTuple: ["17", ", ", "18"],
-                secondTuple: ["19", ", ", "20"],
-            }
-        ],
-        },
-        
-    };
-  }
-  
-  function Row(props) {
-    const { row } = props;
-    const [open, setOpen] = React.useState(false);
-  
-    const columnsRows = Object.entries(row.columns).map(([columnVariable, { firstTuple, secondTuple }]) => ({
-      columnVariable,
-      firstTuple,
-      secondTuple,
-    }));
-    const columnVariable = Object.keys(row.columns).find(key => key === row.variable);
-    return (
-      <React.Fragment>
-        <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-          <TableCell>
-            <IconButton
-              aria-label="expand row"
-              size="small"
-              onClick={() => setOpen(!open)}
-            >
-              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-            </IconButton>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            {row.variable}
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-            <Collapse in={open} timeout="auto" unmountOnExit>
-              <Box sx={{ margin: 1 }}>
-                <Typography variant="h6" gutterBottom component="div">
-                  Submatches
-                </Typography>
-                <Table size="small" aria-label="purchases">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell >Submatch #1</TableCell>
-                      <TableCell >Submatch #2</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {row.columns[row.variable].map((columnsRow, index) => (
-                        <TableRow key={columnVariable + index}>
-                            <TableCell >{columnsRow.firstTuple}</TableCell>
-                            <TableCell >{columnsRow.secondTuple}</TableCell>
-                        </TableRow>
-                        ))
-                    }
-                </TableBody>
+function createData(dictionary) {
+  const matchX = dictionary.match.X;
+  const matchY = dictionary.match.Y;
 
-                </Table>
-              </Box>
-            </Collapse>
-          </TableCell>
-        </TableRow>
-      </React.Fragment>
-    );
-  }
-  
+  const firstRowX = matchX[0] || '';
+  const firstRowY = matchY[0] || '';
+
+  const getVariable = () =>
+    `${dictionary.match.XColumn}: ${firstRowX.substring(0, 5)}...\t${dictionary.match.YColumn}: ${firstRowY.substring(
+      0,
+      5
+    )}...`; // no funciona el \t
+
+  return {
+    matchX,
+    matchY,
+    getVariable,
+  };
+}
+
+function Row(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+  const [variable, setVariable] = React.useState(row.getVariable());
+
+  const handleExpandClick = () => {
+    setOpen(!open);
+    if (open) {
+      setTimeout(() => {
+        setVariable(row.getVariable());
+      }, 0);
+    } else {
+      setVariable('');
+    }
+  };
+
+  return (
+    <React.Fragment>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+        <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={handleExpandClick}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row">
+          {variable}
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={2}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 1 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                component="div"
+                align="center"
+              >
+                Matches
+              </Typography>
+              <Table size="small" aria-label="matches">
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center">X</TableCell>
+                    <TableCell align="center">Y</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {row.matchX.map((value, index) => (
+                    <TableRow key={index}>
+                      <TableCell align="center">{value}</TableCell>
+                      <TableCell align="center">{row.matchY[index]}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
 
 Row.propTypes = {
   row: PropTypes.shape({
-    columns: PropTypes.arrayOf(
-      PropTypes.shape({
-        secondTuple: PropTypes.number.isRequired,
-        firstTuple: PropTypes.string.isRequired,
-        columnVariable: PropTypes.string.isRequired,
-      }),
-    ).isRequired,
-    variable: PropTypes.string.isRequired,
-    price: PropTypes.number.isRequired,
+    matchX: PropTypes.arrayOf(PropTypes.string).isRequired,
+    matchY: PropTypes.arrayOf(PropTypes.string).isRequired,
+    getVariable: PropTypes.func.isRequired,
   }).isRequired,
 };
 
-const rows = [
-  createData('X'),
-  createData('Y'),
-  createData('Z'),
-  createData('A'),
-  createData('B'),
-];
+const columns = {
+  match: {
+    X: ['Domagoj', 'Cristian', 'Oscar', 'Marjorie', 'Vicente', 'Nicolas'],
+    Y: ['Vrgoc', 'Riveros', 'Carcamo', 'Bascunan', 'Calisto', 'Van Sint Jan'],
+    XColumn: "X",
+    YColumn: "Y"
+  },
+  submatches: {
+    X: [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]],
+    Y: [[13, 14], [15, 16], [17, 18], [19, 20], [21, 22], [23, 24]],
+    XColumn: "X",
+    YColumn: "Y"
+  },
+};
+
+const data = createData(columns);
 
 export default function CollapsibleTable() {
   return (
@@ -142,13 +134,10 @@ export default function CollapsibleTable() {
         <TableHead>
           <TableRow>
             <TableCell />
-            <TableCell>Matches</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
-            <Row key={row.variable} row={row} />
-          ))}
+          <Row row={data} />
         </TableBody>
       </Table>
     </TableContainer>
