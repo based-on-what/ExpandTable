@@ -14,41 +14,34 @@ import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
-function createData(dictionary) {
-  const matchX = dictionary.match.X;
-  const matchY = dictionary.match.Y;
-
-  const firstRowX = matchX[0] || '';
-  const firstRowY = matchY[0] || '';
-
-  const getVariable = () =>
-    `${dictionary.match.XColumn}: ${firstRowX.substring(0, 5)}...\t${dictionary.match.YColumn}: ${firstRowY.substring(
-      0,
-      5
-    )}...`; // no funciona el \t
-
-  return {
-    matchX,
-    matchY,
-    getVariable,
-  };
+function joinAndTruncateValues(values) {
+  const joinedString = values.join(',');
+  if (joinedString.length > 10) {
+    return joinedString.substring(0, 10) + '...';
+  }
+  return joinedString;
 }
+
+function createData(dictionary) {
+  const keys = Object.keys(dictionary.match);
+  const rows = keys.map((key) => {
+    const values = dictionary.match[key];
+    const preview = joinAndTruncateValues(values);
+
+    return {
+      key,
+      values,
+      preview,
+    };
+  });
+
+  return rows;
+}
+
 
 function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
-  const [variable, setVariable] = React.useState(row.getVariable());
-
-  const handleExpandClick = () => {
-    setOpen(!open);
-    if (open) {
-      setTimeout(() => {
-        setVariable(row.getVariable());
-      }, 0);
-    } else {
-      setVariable('');
-    }
-  };
 
   return (
     <React.Fragment>
@@ -57,71 +50,61 @@ function Row(props) {
           <IconButton
             aria-label="expand row"
             size="small"
-            onClick={handleExpandClick}
+            onClick={() => setOpen(!open)}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell component="th" scope="row">
-          {variable}
+        <TableCell component="th" scope="row" style={{ width: '50%' }}>
+          {row.preview}
         </TableCell>
       </TableRow>
-      <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={2}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
+      {open && (
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
             <Box sx={{ margin: 1 }}>
-              <Typography
-                variant="h6"
-                gutterBottom
-                component="div"
-                align="center"
-              >
+              <Typography variant="h6" gutterBottom component="div">
                 Matches
               </Typography>
               <Table size="small" aria-label="matches">
                 <TableHead>
                   <TableRow>
-                    <TableCell align="center">X</TableCell>
-                    <TableCell align="center">Y</TableCell>
+                    <TableCell style={{ width: '50%' }}></TableCell>
+                    <TableCell style={{ width: '50%' }}></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.matchX.map((value, index) => (
+                  {row.values.map((value, index) => (
                     <TableRow key={index}>
-                      <TableCell align="center">{value}</TableCell>
-                      <TableCell align="center">{row.matchY[index]}</TableCell>
+                      <TableCell>{value}</TableCell>
+                      <TableCell>
+                        {index === 0 ? row.key : ''} {/* Display key in the first row, otherwise show blank */}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </Box>
-          </Collapse>
-        </TableCell>
-      </TableRow>
+          </TableCell>
+        </TableRow>
+      )}
     </React.Fragment>
   );
 }
 
+
 Row.propTypes = {
   row: PropTypes.shape({
-    matchX: PropTypes.arrayOf(PropTypes.string).isRequired,
-    matchY: PropTypes.arrayOf(PropTypes.string).isRequired,
-    getVariable: PropTypes.func.isRequired,
+    preview: PropTypes.string.isRequired,
+    values: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
 };
 
 const columns = {
   match: {
-    X: ['Domagoj', 'Cristian', 'Oscar', 'Marjorie', 'Vicente', 'Nicolas'],
-    Y: ['Vrgoc', 'Riveros', 'Carcamo', 'Bascunan', 'Calisto', 'Van Sint Jan'],
-    XColumn: "X",
-    YColumn: "Y"
-  },
-  submatches: {
-    X: [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]],
-    Y: [[13, 14], [15, 16], [17, 18], [19, 20], [21, 22], [23, 24]],
-    XColumn: "X",
-    YColumn: "Y"
+    "La casa de mi mamá": ["La", "casa", "de", "mi", "mamá"],
+    "Tiene un techo": ["Tiene", "un", "techo"],
+    "De color rojo anaranjado": ["De", "color", "rojo", "anaranjado"],
   },
 };
 
@@ -137,7 +120,9 @@ export default function CollapsibleTable() {
           </TableRow>
         </TableHead>
         <TableBody>
-          <Row row={data} />
+          {data.map((row, index) => (
+            <Row key={index} row={row} />
+          ))}
         </TableBody>
       </Table>
     </TableContainer>
